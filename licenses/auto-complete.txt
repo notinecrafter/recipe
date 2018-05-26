@@ -1,0 +1,4 @@
+Autocomplete says to be licensed under MIT, but unfortunately only provides 
+a template license on their website. Anyway, check them out.
+
+https://goodies.pixabay.com/javascript/auto-complete/demo.html
