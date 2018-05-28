@@ -29,7 +29,7 @@ if(isset($_GET["time"]) && $_GET["time"] !== ""){
 
 for($i = 0; $i < (int)$_GET["ingredientCount"]; $i++){
 	if(isset($_GET["ingredient".strval($i)]) && $_GET["ingredient".strval($i)] !== ""){
-		appendToSql("id in (SELECT id FROM uses WHERE ingredient=?)", $_GET["ingredient".strval($i)]);
+		appendToSql("id in (SELECT recipe FROM uses WHERE ingredient=?)", $_GET["ingredient".strval($i)]);
 	}
 }
 
