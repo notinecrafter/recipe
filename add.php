@@ -11,7 +11,11 @@
 		<?php
 			if(isset($_POST['instructions'])){
 				include("conn.php");
-
+				if(!is_null($password)){
+					if(hash('sha256', $_POST["password"]) !== $password){
+						exit("wrong password");
+					}
+				}
 				try{
 					$sql = "INSERT INTO recipes(name, people, difficulty, time, category, instructions) VALUES (:name, :people, :difficulty, :time, :category, :instructions);";
 
@@ -75,6 +79,7 @@
 			<input type='hidden' id='ingredientCount' name='ingredientCount' value='1'>
 			Instructions<br/>
 			<textarea name='instructions' rows='20' style="width:100%"></textarea><br/>
+			<input type='password' name='password' autocomplete="on"/>
 			<input type='submit' value='add'/>
 	</div>
 	<script type="text/javascript" src='auto-complete.min.js'></script>
