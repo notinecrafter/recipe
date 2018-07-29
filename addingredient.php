@@ -18,9 +18,10 @@
 
 			$sql = "INSERT INTO ingredients VALUES (?, ?);";
 			$stmt = $conn->prepare($sql);
-			$ingredient = strtolower($_POST['ingredient']);
+			$ingredient = htmlspecialchars(strtolower($_POST['ingredient']));
 			$stmt->bindParam(1, $ingredient);
-			$stmt->bindParam(2, $_POST['class']);
+			$class = htmlspecialchars($_POST['class']);
+			$stmt->bindParam(2, $class);
 			$succes = $stmt->execute();
 			if($succes){
 				echo "Ingredient added succesfully: ".$ingredient;

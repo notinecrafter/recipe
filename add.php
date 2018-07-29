@@ -17,15 +17,20 @@
 					}
 				}
 				try{
+					$conn->beginTransaction();
+
 					$sql = "INSERT INTO recipes(name, people, difficulty, time, category, instructions) VALUES (:name, :people, :difficulty, :time, :category, :instructions);";
 
 					$stmt = $conn->prepare($sql);
-					$stmt->bindParam(":name", $_POST["name"]);
+					$name = htmlspecialchars($_POST["name"]);
+					$stmt->bindParam(":name", $name);
 					$stmt->bindParam(":people", $_POST["people"]);
 					$stmt->bindParam(":difficulty", $_POST["difficulty"]);
 					$stmt->bindParam(":time", $_POST["time"]);
-					$stmt->bindParam(":category", $_POST["category"]);
-					$stmt->bindParam(":instructions", $_POST["instructions"]);
+					$category = htmlspecialchars($_POST["category"]);
+					$stmt->bindParam(":category", $category);
+					$instructions = htmlspecialchars($_POST["instructions"]);
+					$stmt->bindParam(":instructions", $instructions);
 
 					if($stmt->execute()){
 						echo "recipe inserted";
@@ -33,35 +38,36 @@
 						echo "failure in executing: ";
 						exit();
 					}
+
+					//to insert the ingredients, we need the id of the thing we just inserted. This should always be the highest id; therefore,
+					$sql = "SELECT id FROM recipes ORDER BY id DESC LIMIT 1";
+					$stmt = $conn->prepare($sql);
+					$stmt->execute();
+					$stmt->setFetchMode(PDO::FETCH_ASSOC);
+					$results = $stmt->fetchAll();
+					$id = $results[0]["id"];
+
+					//now, for the ingredients
+					$ingredientCount = intval($_POST["ingredientCount"]);
+					for($i = 0; $i < $ingredientCount; $i++){
+						$sql = "INSERT INTO uses(recipe, ingredient, amount, unit, optional) VALUES(:recipe, :ingredient, :amount, :unit, :optional);";
+						$stmt = $conn->prepare($sql);
+						$stmt->bindParam(":recipe", $id);
+						$stmt->bindParam(":ingredient", $_POST["ingredient".strval($i)]);
+						$stmt->bindParam(":amount", $_POST["amount".strval($i)]);
+						$stmt->bindParam(":unit", $_POST["unit".strval($i)]);
+						if(isset($_POST['optional'.strval($i)])){
+							$optional = 1;
+						}else{
+							$optional = 0;
+						}
+						$stmt->bindParam(":optional", $optional);
+
+						$stmt->execute();
+					}
+					$conn->commit();
 				}catch(Exception $e){
 					var_dump($e->getMessage());
-				}
-
-				//to insert the ingredients, we need the id of the thing we just inserted. This should always be the highest id; therefore,
-				$sql = "SELECT id FROM recipes ORDER BY id DESC LIMIT 1";
-				$stmt = $conn->prepare($sql);
-				$stmt->execute();
-				$stmt->setFetchMode(PDO::FETCH_ASSOC);
-				$results = $stmt->fetchAll();
-				$id = $results[0]["id"];
-
-				//now, for the ingredients
-				$ingredientCount = intval($_POST["ingredientCount"]);
-				for($i = 0; $i < $ingredientCount; $i++){
-					$sql = "INSERT INTO uses(recipe, ingredient, amount, unit, optional) VALUES(:recipe, :ingredient, :amount, :unit, :optional);";
-					$stmt = $conn->prepare($sql);
-					$stmt->bindParam(":recipe", $id);
-					$stmt->bindParam(":ingredient", $_POST["ingredient".strval($i)]);
-					$stmt->bindParam(":amount", $_POST["amount".strval($i)]);
-					$stmt->bindParam(":unit", $_POST["unit".strval($i)]);
-					if(isset($_POST['optional'.strval($i)])){
-						$optional = 1;
-					}else{
-						$optional = 0;
-					}
-					$stmt->bindParam(":optional", $optional);
-
-					$stmt->execute();
 				}
 			}
 		?>
@@ -80,7 +86,8 @@
 			Instructions<br/>
 			<textarea name='instructions' rows='20' style="width:100%"></textarea><br/>
 			<input type='password' name='password' autocomplete="on"/>
-			<input type='submit' value='add'/>
+			<input type='submit' value='add'/><br/>
+			<p><a href='addingredient.php' target='_blank'>Ingrediënt not listed?</a></p>
 	</div>
 	<script type="text/javascript" src='auto-complete.min.js'></script>
 	<script type="text/javascript">
@@ -109,14 +116,12 @@
 		});
 
 		function addAutoComplete(elementName){
-			console.log(elementName)
 			var auto = new autoComplete({
-			selector: 'input[name="'+elementName+'"]',
-			source: function(term, response){
-				console.log("asdf");
-				getJSON("autocomplete.php?input="+term, function(status, data){response(data);});
-		    }
-		});
+				selector: 'input[name="'+elementName+'"]',
+				source: function(term, response){
+					getJSON("autocomplete.php?input="+term, function(status, data){response(data);});
+			    }
+			});
 
 		}
 

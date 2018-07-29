@@ -33,6 +33,14 @@ $ingredients = $stmt->fetchAll();
 
 $parsedown = new Parsedown();
 $parsedown->setSafeMode(true);
+
+$sql = "SELECT time,note FROM notes WHERE recipe=?";
+$stmt = $conn->prepare($sql);
+$stmt->bindParam(1, $_GET["id"]);
+$stmt->execute();
+
+$stmt->setFetchMode(PDO::FETCH_ASSOC);
+$notes = $stmt->fetchAll();
 ?>
 <!DOCTYPE html>
 <html>
@@ -62,5 +70,20 @@ $parsedown->setSafeMode(true);
 		</ul>
 		<h4>Instructions</h4>
 		<p><?php echo $parsedown->text($result["instructions"]);?></p>
+		<h4>Notes</h4>
+		<p>
+			<ul>
+				<?php
+				foreach($notes as $note){
+					echo "<li><b>".$note["time"]."</b>: ".$note["note"];
+				}
+				?>
+			</ul>
+		</p>
+		<form action="addnote.php" method="POST">
+			<textarea name="note" rows="10" style="width:100%"></textarea>
+			<input type='hidden' name='recipe' value='<?php echo $_GET["id"];?>'/>
+			<input type='submit'/>
+		</form>
 	</div>
 </body>
